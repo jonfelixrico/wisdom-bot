@@ -7,6 +7,10 @@ const Quote = module.exports = config.define('quote', {
         primaryKey: true,
         autoIncrement: true
     },
+    uuid: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     content: {
         type: Sequelize.STRING,
         allowNull: false
