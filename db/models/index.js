@@ -1,7 +1,7 @@
-const Author = require('./author.model'),
+const User = require('./user.model'),
     Quote = require('./quote.model');
 
-Author.hasMany(Quote, 'Wisdom');
-Quote.belongsTo(Author);
+User.hasMany(Quote, 'Wisdom');
+Quote.belongsTo(User);
 
-module.exports = { Author, Quote };
+module.exports = { User, Quote };
