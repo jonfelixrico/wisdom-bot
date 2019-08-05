@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/flxrco/wisdom-bot#readme",
   "dependencies": {
+    "discord.js": "^11.5.1",
     "mysql2": "^1.6.5",
     "sequelize": "^5.12.3"
   }
