@@ -1,18 +1,18 @@
 const Sequelize = require('sequelize');
 
 module.exports = function(sequelize) {
-    return sequelize.define('user', {
+    return sequelize.define('muteFlag', {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
-        discordId: {
-            type: Sequelize.STRING,
+        createdAt: {
+            type: Sequelize.DATE,
             allowNull: false,
-            unique: true
+            defaultValue: Sequelize.NOW
         },
-        adminLevel: Sequelize.INTEGER,
-        alias: Sequelize.STRING
+        expiration: Sequelize.DATE,
+        reason: Sequelize.TEXT
     });
-};
+}
