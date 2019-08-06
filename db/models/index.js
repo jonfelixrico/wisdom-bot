@@ -1,17 +1,30 @@
 const Sequelize = require('sequelize'),
     Op = Sequelize.Op;
 
-const sequelize = new Sequelize('quote_bot_db', 'root', 'admin', {
-  host: 'localhost',
-  dialect: 'mysql',
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  }
-});
+// const sequelize = new Sequelize('quote_bot_db', 'quote-bot', 'fshwoop', {
+//   host: 'hobby-mysql.cj4go5v0wkzo.ap-southeast-1.rds.amazonaws.com',
+//   dialect: 'mysql',
+//   pool: {
+//     max: 10,
+//     min: 0,
+//     acquire: 30000,
+//     idle: 10000
+//   }
+// });
 
+const sequelize = new Sequelize('mysql://quote-bot:fshwoop@hobby-mysql.cj4go5v0wkzo.ap-southeast-1.rds.amazonaws.com:3306/quote_bot_db', {
+    dialect: 'mysql',
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  });
+
+// mysql://quote_bot:fshwoop@hobby-mysql.cj4go5v0wkzo.ap-southeast-1.rds.amazonaws.com:3306/quote_bot_db
+
+// postgres://fred:xj78?23@example.com/db
 const User = require('./user.model')(sequelize),
     Quote = require('./quote.model')(sequelize),
     MuteFlag = require('./mute-flag.model')(sequelize);
