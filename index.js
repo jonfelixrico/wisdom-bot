@@ -2,11 +2,29 @@ const Discord = require('discord.js');
 const { prefix, token, channel } = require('./config.json');
 const client = new Discord.Client();
 
-client.once('ready',() => {
-    console.log('Bot Online!');
-})
+const { sequelize } = require('./db/models');
+const quoteManager = require('./services/quote-manager.service')(client);
 
-client.on('message', message => {
+const VOTE_EMOJI = '🤔',
+    VOTES_REQUIRED = 1,
+    VOTING_DAYS = 7;
+
+
+function quoteDataExtractor(message) {
+    return {
+        content: message.content.replace(`${prefix} add `,''),
+        author: 'Jolo Morales',
+        year: 2019
+    };
+}
+
+client.once('ready', async () => {
+    await sequelize.sync();
+    console.log('Bot Online!');
+});
+
+client.on('message', async message => {
+
     if(message.content.startsWith(`${prefix} receive`)){
         message.delete();
         if(message.channel.name == channel){
@@ -16,9 +34,10 @@ client.on('message', message => {
             message.channel.delete(message.channel.lastMessage);
         }
         else{
-            message.channel.send('**Random Quote**');   
+            quoteManager.receiveQuote(message.channel);
         }
     }
+    
     if(message.content.startsWith(`${prefix} add`)){
         message.delete();
         if(message.channel.name == channel){
@@ -28,19 +47,8 @@ client.on('message', message => {
                     .then(msg =>
                         msg.delete(5000));
             }
-            else{
-                user = message.author
-
-                vote = await message.awaitReactions(reaction => {
-                    return reaction.emoji.name === "🤔",time(6.048e+8);
-                });              
-                console.log(vote.count);
-
-                message.channel.send(`**${quote}** _heard by_ ***${user}*** \n __*Please react 🤔 to approve and add to database. 3 upvotes within a week required to approve.*__`)
-                .then(sentEmbed => {
-                    sentEmbed.react("🤔")
-                });
-                //add reactor collector here
+            else {
+                quoteManager.submitQuote(message, VOTE_EMOJI, VOTING_DAYS, VOTES_REQUIRED, quoteDataExtractor);
             }
         }
         else{
