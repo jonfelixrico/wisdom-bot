@@ -53,8 +53,10 @@ async function deleteQuote(adminId, discordMessageId) {
 
 // Randomly grabs a quote from the database.
 async function getRandomQuote() {
-    const quote = await Quote.findOne({ order: sequelize.literal('rand()') });
-    return quote || { content: 'The quote bank is empty.' };
+    return await Quote.findOne({
+        order: sequelize.literal('rand()'),
+        include: [ { model: User, as: 'user' } ]
+    });
 }
 
 /*

@@ -3,42 +3,19 @@ const { prefix, token, channel } = require('./config.json');
 const client = new Discord.Client();
 
 const { sequelize } = require('./db/models');
-const { getRandomQuote } = require('./db/funcs/quote.func');
+const quoteManager = require('./services/quote-manager.service')(client);
 
-const reactService = require('./services/react.service')(client);
+const VOTE_EMOJI = '🤔',
+    VOTES_REQUIRED = 1,
+    VOTING_DAYS = 7;
 
-let VOTE_EMOJI = '🤔';
 
 function quoteDataExtractor(message) {
     return {
-        content: message.content.replace(`${prefix} add`,''),
+        content: message.content.replace(`${prefix} add `,''),
         author: 'Jolo Morales',
         year: 2019
     };
-}
-
-async function addQuote(quoteMessage) {
-    const user = quoteMessage.author;
-    const botMessage = await quoteMessage.channel.send(`**${quote}** _heard by_ ***${user}*** \n __*Please react 🤔 to approve and add to database. 3 upvotes within a week required to approve.*__`)
-
-    await reactService.createNewQuote(
-        quoteMessage,
-        botMessage,
-        VOTE_EMOJI,
-        7,
-        3,
-        quoteDataExtractor,
-        (err, res) => {
-            if (err) {
-                quoteMessage.channel.send(`The quote was not saved in the db.`);
-                return;
-            }
-
-            quoteMessage.channel.send('Quote saved.');
-        }
-    );
-
-    botMessage.react('🤔');
 }
 
 client.once('ready', async () => {
@@ -57,7 +34,7 @@ client.on('message', async message => {
             message.channel.delete(message.channel.lastMessage);
         }
         else{
-            message.channel.send((await getRandomQuote()).content);   
+            quoteManager.receiveQuote(message.channel);
         }
     }
     
@@ -71,7 +48,7 @@ client.on('message', async message => {
                         msg.delete(5000));
             }
             else {
-                addQuote(message);
+                quoteManager.submitQuote(message, VOTE_EMOJI, VOTING_DAYS, VOTES_REQUIRED, quoteDataExtractor);
             }
         }
         else{
