@@ -3,6 +3,7 @@ const { prefix, token, channel } = require('./config.json');
 const client = new Discord.Client();
 
 const { sequelize } = require('./db/models');
+const { getRandomQuote } = require('./db/funcs/quote.func');
 
 const reactService = require('./services/react.service')(client);
 
@@ -41,11 +42,11 @@ async function addQuote(quoteMessage) {
 }
 
 client.once('ready', async () => {
-    await sequelize.sync({ force: true });
+    await sequelize.sync();
     console.log('Bot Online!');
 });
 
-client.on('message', message => {
+client.on('message', async message => {
 
     if(message.content.startsWith(`${prefix} receive`)){
         message.delete();
@@ -56,7 +57,7 @@ client.on('message', message => {
             message.channel.delete(message.channel.lastMessage);
         }
         else{
-            message.channel.send('**Random Quote**');   
+            message.channel.send((await getRandomQuote()).content);   
         }
     }
     
