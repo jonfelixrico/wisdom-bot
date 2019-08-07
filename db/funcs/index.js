@@ -7,8 +7,8 @@ async function demo() {
     try {
         await models.sequelize.sync({ force: true });
         console.log('Beginning tests!');
-        const quote = await quoteFuncs.createQuote(uuid(), 'Testing!');
-        const user = await quote.getAuthor();
+        const quote = await quoteFuncs.createQuote(uuid(), uuid(), 'Ika nga', 'Jolo Morales', 2019);
+        const user = await quote.getUser();
         console.log(user);
 
         const muteFlag = await user.getActiveMuteFlag();

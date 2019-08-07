@@ -7,12 +7,11 @@ module.exports = function(sequelize) {
             primaryKey: true,
             autoIncrement: true
         },
-        discordId: {
+        discordUserId: {
             type: Sequelize.STRING,
             allowNull: false,
             unique: true
         },
-        adminLevel: Sequelize.INTEGER,
-        alias: Sequelize.STRING
+        adminLevel: Sequelize.INTEGER
     });
 };

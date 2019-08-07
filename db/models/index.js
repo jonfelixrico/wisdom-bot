@@ -30,7 +30,7 @@ const User = require('./user.model')(sequelize),
     MuteFlag = require('./mute-flag.model')(sequelize);
 
 User.hasMany(Quote, { as: 'quotes', foreignKey: 'userId' });
-Quote.belongsTo(User, { as: 'author', foreignKey: 'userId' });
+Quote.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 
 User.hasMany(MuteFlag, { as: 'muteFlags', foreignKey: 'mutedUserId' });
 MuteFlag.belongsTo(User, { as: 'mutedUser', foreignKey: 'mutedUserId' });

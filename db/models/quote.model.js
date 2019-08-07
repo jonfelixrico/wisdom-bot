@@ -8,23 +8,24 @@ module.exports = function(sequelize) {
             primaryKey: true,
             autoIncrement: true
         },
-        uuid: {
+        discordMessageId: {
             type: Sequelize.STRING,
             unique: true
         },
         content: {
+            type: Sequelize.TEXT,
+            allowNull: false
+        },
+        author: {
             type: Sequelize.STRING,
             allowNull: false
         },
+        year: Sequelize.INTEGER,
         createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
             defaultValue: Sequelize.NOW
         }
-    });
-
-    Quote.addHook('afterValidate', 'generateUuid', (user) => {
-        user.uuid = shortUuid.generate();
     });
 
     return Quote;
