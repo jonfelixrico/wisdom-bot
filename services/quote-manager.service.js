@@ -16,11 +16,11 @@ module.exports = function(client) {
 
         const response = await channel.send(
             `👂 **"${ quote.content }"** - ${ quote.author }, ${ quote.year }
-            *submitted by ${ message.author }*`
+            *Submitted by ${ message.author }. Needs ${ minimumVotesRequired } ${ emojiName } reacts for approval.*`
         );
         await response.react('💨');
 
-        createReactObs(response, emojiName, approvalWindow, minimumVotesRequired, [client.user.id]).subscribe(async res => {
+        createReactObs(response, emojiName, approvalWindow, minimumVotesRequired, [client.user.id, message.author.id]).subscribe(async res => {
             await response.delete();
             if (!res) {
                 await channel.send(
@@ -34,7 +34,7 @@ module.exports = function(client) {
         
             await channel.send(
                 `💾 **"${ quote.content }"** - ${ quote.author }, ${ quote.year }
-                ${ message.user }, your submission has been accepted.`
+                ${ message.author }, your submission has been accepted.`
             );
         });
     }

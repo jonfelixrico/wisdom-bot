@@ -6,14 +6,14 @@ const { sequelize } = require('./db/models');
 const quoteManager = require('./services/quote-manager.service')(client);
 
 const VOTE_EMOJI = '🤔',
-    VOTES_REQUIRED = 1,
+    VOTES_REQUIRED = 3,
     VOTING_DAYS = 7;
 
 
 function quoteDataExtractor(message) {
     return {
         content: message.content.replace(`${prefix} add `,''),
-        author: 'Jolo Morales',
+        author: 'Morales',
         year: 2019
     };
 }
