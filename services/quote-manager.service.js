@@ -15,7 +15,7 @@ module.exports = function(client) {
         const quote = quoteDataFn(message);
 
         const response = await channel.send(
-            `👂 **"${ quote.content }"** -${ quote.author }, ${ quote.year }
+            `👂 **"${ quote.content }"** - ${ quote.author }, ${ quote.year }
             *submitted by ${ message.author }*`
         );
         await response.react('💨');
@@ -24,7 +24,7 @@ module.exports = function(client) {
             await response.delete();
             if (!res) {
                 await channel.send(
-                    `🗑️ **"${ quote.content }"** -${ quote.author }, ${ quote.year }
+                    `🗑️ **"${ quote.content }"** - ${ quote.author }, ${ quote.year }
                     ${ message.author }, your submission was not accepted due to lack of votes.`
                 );
                 return;
@@ -33,7 +33,7 @@ module.exports = function(client) {
             await createQuote(message.author.id, message.id, quote.content, quote.author, quote.year);
         
             await channel.send(
-                `💾 **"${ quote.content }"** -${ quote.author }, ${ quote.year }
+                `💾 **"${ quote.content }"** - ${ quote.author }, ${ quote.year }
                 ${ message.user }, your submission has been accepted.`
             );
         });
@@ -47,20 +47,14 @@ module.exports = function(client) {
             return;
         }
 
-        let loadingMessage = null;
+        let fshwoop = await channel.send('💨');
 
-        for (let i = 1; i <= 5; i++) {
-            if (loadingMessage !== null) {
-                await loadingMessage.delete();
-            }
-
-            loadingMessage = await channel.send(new Array(i).fill('💨').join(''));
+        for (let i = 2; i <= 5; i++) {
+            fshwoop = await fshwoop.edit(new Array(i).fill('💨').join(''));
             await delay(100);
         }
 
-        await loadingMessage.delete();
-
-        await channel.send(
+        await fshwoop.edit(
             `💭 **"${ quote.content }"** -${ quote.author }, ${ quote.year }`
         );
     }
