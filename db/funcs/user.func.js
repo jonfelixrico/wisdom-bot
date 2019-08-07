@@ -2,14 +2,14 @@ const models = require('../models'),
     moment = require('moment'),
     User = models.User;
 
-async function findUser(discordId) {
-    return await User.findOne({ where: { discordId } });
+async function findUser(discordMessageId) {
+    return await User.findOne({ where: { discordMessageId } });
 }
 
-// Expects the discordId of an admin. If the id is associated with am
+// Expects the discordMessageId of an admin. If the id is associated with am
 // admin, returns the record. Else, throws an error.
-async function findAdmin(discordId) {
-    const user = await User.findOne({ where: { discordId } });
+async function findAdmin(discordMessageId) {
+    const user = await User.findOne({ where: { discordMessageId } });
 
     if (!user.adminLevel) {
         throw new Error(`User is not an administrator`);
