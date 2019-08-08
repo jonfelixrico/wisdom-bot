@@ -2,11 +2,24 @@ const Discord = require('discord.js');
 const { prefix, token, channel } = require('./config.json');
 const client = new Discord.Client();
 
-client.once('ready',() => {
+client.on('ready',() => {
+    client.user.setActivity('!wisdom help', { type: 'PLAYING'});
     console.log('Bot Online!');
 })
 
 client.on('message', message => {
+    if(message.content.startsWith(`${prefix} help`)){
+        message.delete();
+        if(message.channel.name == channel){
+            message.reply('Help can only be sent through other channels_')
+                    .then(msg =>
+                        msg.delete(5000));
+            message.channel.delete(message.channel.lastMessage);
+        }
+        else{
+            message.channel.send('>>> Wisdom Bot Commands\n\n**!wisdom receive** - to summon a quote through vape tricks. \n**!wisdom add quote** - to add knowledge to the database. _Works only in_ ***jolo-transcript***' );   
+        }
+    }
     if(message.content.startsWith(`${prefix} receive`)){
         message.delete();
         if(message.channel.name == channel){
@@ -31,10 +44,10 @@ client.on('message', message => {
             else{
                 user = message.author
 
-                vote = await message.awaitReactions(reaction => {
-                    return reaction.emoji.name === "🤔",time(6.048e+8);
-                });              
-                console.log(vote.count);
+                // vote = await message.awaitReactions(reaction => {
+                //     return reaction.emoji.name === "🤔",time(6.048e+8);
+                // });              
+                // console.log(vote.count);
 
                 message.channel.send(`**${quote}** _heard by_ ***${user}*** \n __*Please react 🤔 to approve and add to database. 3 upvotes within a week required to approve.*__`)
                 .then(sentEmbed => {
