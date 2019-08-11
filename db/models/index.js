@@ -1,14 +1,15 @@
 const Sequelize = require('sequelize'),
     Op = Sequelize.Op;
 
-const sequelize = new Sequelize('mysql://quote-bot:fshwoop@hobby-mysql.cj4go5v0wkzo.ap-southeast-1.rds.amazonaws.com:3306/quote_bot_db', {
+const sequelize = new Sequelize('mysql://wisdom-bot:fshwoop@db-mysql.cjglvsednhim.ap-southeast-1.rds.amazonaws.com:3306/quote_bot_db', {
     dialect: 'mysql',
     pool: {
       max: 10,
       min: 0,
       acquire: 30000,
       idle: 10000
-    }
+    },
+    ssl: 'Amazon RDB'
   });
 
 const User = require('./user.model')(sequelize),

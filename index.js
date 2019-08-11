@@ -37,6 +37,19 @@ client.on('message', async message => {
             quoteManager.receiveQuote(message.channel);
         }
     }
+
+    if(message.content.startsWith(`${prefix} help`)){
+        message.delete();
+        if(message.channel.name == channel){
+            message.reply('Help can only be sent through other channels_')
+                    .then(msg =>
+                        msg.delete(5000));
+            message.channel.delete(message.channel.lastMessage);
+        }
+        else{
+            message.channel.send('>>> Wisdom Bot Commands\n\n**!wisdom receive** - to summon a quote through vape tricks. \n**!wisdom add quote** - to add knowledge to the database. _Works only in_ ***jolo-transcript***' );   
+        }
+    }
     
     if(message.content.startsWith(`${prefix} add`)){
         message.delete();
