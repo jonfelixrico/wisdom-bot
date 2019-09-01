@@ -1,45 +1,17 @@
 const Sequelize = require('sequelize'),
-    Op = Sequelize.Op;
-
-const sequelize = new Sequelize('mysql://wisdom-bot:fshwoop@db-mysql.cjglvsednhim.ap-southeast-1.rds.amazonaws.com:3306/quote_bot_db', {
-    dialect: 'mysql',
-    pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    },
-    ssl: 'Amazon RDB'
-  });
+    { sequelize } = require('../db.service');
 
 const User = require('./user.model')(sequelize),
     Quote = require('./quote.model')(sequelize),
-    MuteFlag = require('./mute-flag.model')(sequelize);
+    Receive = require('./receive.model')(sequelize);
 
-User.hasMany(Quote, { as: 'quotes', foreignKey: 'userId' });
-Quote.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+User.hasMany(Quote, { as: 'submitted', foreignKey: 'submittedBy' });
+User.hasMany(Quote, { as: 'quotes', foreignKey: 'spokenBy' });
 
-User.hasMany(MuteFlag, { as: 'muteFlags', foreignKey: 'mutedUserId' });
-MuteFlag.belongsTo(User, { as: 'mutedUser', foreignKey: 'mutedUserId' });
+Quote.belongsTo(User, { as: 'submitter', foreignKey: 'submittedBy' });
+Quote.belongsTo(User, { as: 'source', foriegnKey: 'spokenBy' });
 
-User.hasMany(MuteFlag, { as: 'issuedMutes', foreignKey: 'issuerId' });
-MuteFlag.belongsTo(User, { as: 'issuer', foreignKey: 'issuerId' });
+User.hasMany(Receive, { as: 'received', foreignKey: 'receivedBy' });
+Receive.belongsTo(User, { as: 'recipient', foreignKey: 'receivedBy' });
 
-User.prototype.getActiveMuteFlag = async function() {
-    const flags = await this.getMuteFlags({ 
-        where: { 
-            [Op.or]: [
-                {
-                    expiration: { [Op.eq]: null }
-                },
-                {
-                    expiration: { [Op.gte]: new Date() }
-                }
-            ]
-        }
-    });
-
-    return flags.length ? flags[0] : null;
-}
-
-module.exports = { User, Quote, MuteFlag, sequelize };
+module.exports = { User, Quote, Receive };
