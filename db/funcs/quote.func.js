@@ -1,50 +1,53 @@
-const models = require('../models'),
-    UserFuncs = require('./user.func'),
-    User = models.User,
-    Quote = models.Quote,
-    sequelize = models.sequelize;
+const { User, Quote, Receive, sequelize } = require('../models'),
+    { execute } = require('../db.service'),
+    { Op } = require('sequelize'),
+    weightedRandom = require('weighted-random'),
+    uuid = require('short-uuid').generate;
 
 /*
     CREATE & DELETE FUNCTIONS
 */
 
-// Creates a quote. Tested.
-async function createQuote(authorId, messageId, content, author, year) {
+async function createQuote(submittedBy, spokenBy, isUser, expiresAt, content, year) {
+    year = year || new Date().getFullYear();
 
-    // finds the user associated with the authorId
-    // if no records are found, registers the authorId and then creates it
-    let user = await User.findOrCreate({ where: { discordUserId: authorId } });
-    user = user[0]; // the func returns an array so we need to pluck its only result
+    let quote = null;
+    await sequelize.transaction(async transaction => {
+        submittedBy = (await User.findOrCreate({ where: { snowflake: submittedBy }, transaction }))[0];
 
-    // check if the plucked user is currently muted; throws an error if they are
-    if (await user.getActiveMuteFlag()) {
-        throw new Error(`User is currently muted.`);
-    }
+        const data = {
+            submittedBy: submittedBy.id,
+            expiresAt,
+            year,
+            content,
+            uuid: uuid()
+        };
 
-    // create the quote and return it
-    return await user.createQuote({
-        discordMessageId: messageId,
-        content,
-        author,
-        year
+        if (isUser) {
+            spokenBy = (await User.findOrCreate({ where: { snowflake: spokenBy }, transaction }))[0];
+            data.spokenBy = spokenBy.id;
+        } else {
+            data.nonUser = spokenBy;
+        }
+
+        quote = await Quote.create(data, { transaction });
     });
+
+    return quote;
 }
 
-// deletes a quote from the database
-async function deleteQuote(adminId, discordMessageId) {
-    // verify if the id associated with parameter adminId is really an admin
-    await UserFuncs.findAdmin(adminId);
+async function approveQuote(quoteUuid) {
+    const quote = Quote.findOne({ where: {
+        uuid: quoteUuid,
+        approvedAt: null,
+        expiresAt: { [Op.gte]: new Date() }
+    } });
 
-    // finds the quote associated with the given uuid
-    const quote = await Quote.findOne({ where: { discordMessageId } });
-
-    // return null if no quotes match
     if (!quote) {
-        return null;
+        throw new Error(`${ quoteUuid } does not point to an existing or active unapproved quote.`);
     }
 
-    // destroy the quote from the db and return the leftovers
-    return await quote.destroy();
+    return await quote.update({ approvedAt: new Date() });
 }
 
 /*
@@ -52,43 +55,50 @@ async function deleteQuote(adminId, discordMessageId) {
 */
 
 // Randomly grabs a quote from the database.
-async function getRandomQuote() {
-    return await Quote.findOne({
-        order: sequelize.literal('rand()'),
-        include: [ { model: User, as: 'user' } ]
-    });
-}
+async function getRandomQuote(userSnowflake) {
+    let quotes = await execute(`
+        SELECT
+            q.id,
+            IF(r.id IS NULL, 0, r.count) count
+        FROM quotes q
+        LEFT JOIN (
+            SELECT
+                COUNT(*) count,
+                id
+            FROM receives
+            GROUP BY id
+        ) r ON q.id = r.id
+        WHERE q.approvedAt IS NOT NULL
+    `);
 
-/*
-    ORPHAN RECOVERY
-*/
-
-async function checkIfOrphan(discordMessageId) {
-    const quote = await Quote.findOne({ 
-        where: { discordMessageId },
-        attributes: ['discordMessageId']
-    });
-
-    return !!quote;
-}
-
-async function checkIfOrphanMulti(...discordMessageIds) {
-    const quotes = await Quote.findAll({ 
-        where: { discordMessageId },
-        attributes: ['discordMessageId']
-    });
-
-    const acceptedIds = new Set(quotes.map(quote => quote.discordMessageId));
-
-    const orhpanedIds = [];
-
-    for (const id of discordMessageIds) {
-        if (!acceptedIds.has(id)) {
-            orhpanedIds.push(id);
-        }
+    if (!quotes.length) {
+        return null;
     }
 
-    return orhpanedIds;
+    console
+
+    const weights = quotes.map(quote => quote.count),
+        max = Math.max(...weights);
+
+    const selectedId = quotes[weightedRandom(weights.map(weight => max === 0 ? 100 : (101 - (weight / max * 100))))].id;
+
+    let quote = null;
+
+    await sequelize.transaction(async transaction => {
+        quote = await Quote.findByPk(selectedId, { transaction });
+        const user = (await User.findOrCreate({ where: { snowflake: userSnowflake }, transaction }))[0];
+
+        await Receive.create({ quoteId: quote.id, receivedBy: user.id, receivedAt: new Date() }, { transaction });
+    });
+
+    return quote;
 }
 
-module.exports = { createQuote, deleteQuote, getRandomQuote, checkIfOrphan, checkIfOrphanMulti };
+async function getUnapproved() {
+    return await Quote.findAll({
+        where: { approvedAt: null, expiresAt: { [Op.gte]: new Date() } },
+        include: ['recipient', 'source']
+    });
+}
+
+module.exports = { createQuote, approveQuote, getRandomQuote, getUnapproved };

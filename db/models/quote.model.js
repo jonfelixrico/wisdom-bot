@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize'),
-    uuid = require('short-uuid');
+    uuid = require('short-uuid').generate;
 
 module.exports = function(sequelize) {
     const Quote = sequelize.define('quote', {
@@ -15,15 +15,15 @@ module.exports = function(sequelize) {
 
         // references the user model
         submittedBy: {
-            type: Sequelize.NUMBER,
+            type: Sequelize.INTEGER,
             allowNull: false
         },
 
         // references the user model
-        spokenBy: Sequelize.NUMBER,
+        spokenBy: Sequelize.INTEGER,
         // if spokenBy is null, that means the quoted person is not a registered discord user
-        // alias should have a string value that represents the quoted person
-        alias: Sequelize.STRING,
+        // nonUser should have a string value that represents the quoted person
+        nonUser: Sequelize.STRING,
 
         // content of the quote
         content: {
@@ -39,17 +39,15 @@ module.exports = function(sequelize) {
             allowNull: false,
             defaultValue: Sequelize.NOW
         },
+
+        // timestamp of when an unapproved quote expires
         expiresAt: {
             type: Sequelize.DATE,
             allowNull: false
         },
 
         // timestamp of when the quote was accepted
-        acceptedAt: Sequelize.DATE
-    });
-
-    Quote.beforeCreate(function (quote) {
-        quote.uuid = uuid();
+        approvedAt: Sequelize.DATE
     });
 
     return Quote;
