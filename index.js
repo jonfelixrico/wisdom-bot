@@ -1,22 +1,20 @@
+require('dotenv').config()
+
 const Discord = require('discord.js');
-const { prefix, token, channel } = require('./config.json');
+const { DISCORD_TOKEN, DISCORD_PREFIX, DISCORD_CHANNEL } = process.env;
 const client = new Discord.Client();
 
 const { sequelize } = require('./db/models');
-const quoteManager = require('./services/quote-manager.service')(client);
-
-const VOTE_EMOJI = '🤔',
-    VOTES_REQUIRED = 3,
-    VOTING_DAYS = 7;
-
 
 function quoteDataExtractor(message) {
     return {
-        content: message.content.replace(`${prefix} add `,''),
+        content: message.content.replace(`${ DISCORD_PREFIX } add `,''),
         author: 'Morales',
         year: 2019
     };
 }
+
+const quoteManager = require('./services/quote-manager.service')(client, '🤔', 7, 1, quoteDataExtractor);
 
 client.once('ready', async () => {
     await sequelize.sync();
@@ -25,22 +23,22 @@ client.once('ready', async () => {
 
 client.on('message', async message => {
 
-    if(message.content.startsWith(`${prefix} receive`)){
-        message.delete();
-        if(message.channel.name == channel){
+    if(message.content.startsWith(`${ DISCORD_PREFIX } receive`)){
+        // message.delete();
+        if(message.channel.name == DISCORD_CHANNEL){
             message.reply('_Wisdom can only be received from other channels_')
                     .then(msg =>
                         msg.delete(5000));
             message.channel.delete(message.channel.lastMessage);
         }
         else{
-            quoteManager.receiveQuote(message.channel);
+            quoteManager.receiveQuote(message);
         }
     }
 
-    if(message.content.startsWith(`${prefix} help`)){
-        message.delete();
-        if(message.channel.name == channel){
+    if(message.content.startsWith(`${ DISCORD_PREFIX } help`)){
+        // message.delete();
+        if(message.channel.name == DISCORD_CHANNEL){
             message.reply('Help can only be sent through other channels_')
                     .then(msg =>
                         msg.delete(5000));
@@ -51,25 +49,25 @@ client.on('message', async message => {
         }
     }
     
-    if(message.content.startsWith(`${prefix} add`)){
-        message.delete();
-        if(message.channel.name == channel){
-            quote = message.content.replace(`${prefix} add`,'');
+    if(message.content.startsWith(`${ DISCORD_PREFIX } add`)){
+        // message.delete();
+        if(message.channel.name == DISCORD_CHANNEL){
+            quote = message.content.replace(`${ DISCORD_PREFIX } add`,'');
             if(quote.length == 0){
                 message.reply('_Error! There is no quote_')
                     .then(msg =>
                         msg.delete(5000));
             }
             else {
-                quoteManager.submitQuote(message, VOTE_EMOJI, VOTING_DAYS, VOTES_REQUIRED, quoteDataExtractor);
+                quoteManager.submitQuote(message);
             }
         }
         else{
-            message.reply(`Please use the ${channel}`)
+            message.reply(`Please use the ${ DISCORD_CHANNEL }`)
                     .then(msg =>
                         msg.delete(5000));
         }
     }
 })
 
-client.login(token);
+client.login(DISCORD_TOKEN);
