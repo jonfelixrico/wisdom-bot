@@ -1,5 +1,5 @@
 const reactObservable = require('../utils/reaction-observer.util'),
-    { createQuote, getRandomQuote } = require('../db/funcs/quote.func'),
+    { createQuote, getRandomQuote, getUnapproved } = require('../db/funcs/quote.func'),
     { Observable } = require('rxjs'),
     { retry } = require('rxjs/operators'),
     moment = require('moment');
@@ -10,21 +10,25 @@ function delay(duration) {
     });
 }
 
-async function authorString(quoteWithIncludes) {
-    let authorString = quoteWithIncludes.nonUser;
-    if (!quoteWithIncludes.nonUser) {
-        const { alias, snowflake } = quoteWithIncludes.source;
-        const source = await client.fetchUser(snowflake);
-        authorString = alias ? `${ alias } (${ source })` : source;
-    }
-
-    return authorString;
-}
-
-module.exports = function(client, emojiName, duration, votesRequired, quoteDataFn) {
+module.exports = function(client, emojiName, duration, votesRequired, quoteDataFn, channelName) {
 
     async function fetchAuthor(message) {
         return await client.fetchUser(message.author.id);
+    }
+
+    async function fetchUser(snowflake) {
+        return await client.fetchUser(snowflake);
+    }
+
+    async function authorString(quoteWithIncludes) {
+        let authorString = quoteWithIncludes.nonUser;
+        if (!quoteWithIncludes.nonUser) {
+            const { alias, snowflake } = quoteWithIncludes.source;
+            const source = await client.fetchUser(snowflake);
+            authorString = alias ? `${ alias } (${ source })` : source;
+        }
+    
+        return authorString;
     }
 
     async function submitQuote(message) {
@@ -52,7 +56,7 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
             `🆔 ${ quote.uuid }`
         ].join('\n'));
 
-        const sub = reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id])
+        reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id])
             .subscribe(
                 // on reaction collect
                 res => {
@@ -68,10 +72,6 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
                 },
                 // on complete/approval
                 async () => {
-                    // await quote.update({
-                    //     approvedAt: new Date()
-                    // });
-
                     try {
                         // if updating the quote failes, try 5 more times
                         await new Observable(async observer => {
@@ -124,5 +124,77 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
         }
     }
 
-    return { submitQuote, receiveQuote }
+    async function recoverOrphans() {
+        const channel = client.channels.array().filter(channel => channel.type === 'text' && channel.name === channelName)[0];
+        // get unapproved quotes from the db
+        let unapproved = await getUnapproved();
+        // convert it from array to dict, with the uuid as the key
+        unapproved = unapproved.reduce((obj, row) => {
+            obj[row.uuid] = row;
+            return obj;
+        }, {});
+
+        // fetch all messages from the given channel
+        let messages = await channel.fetchMessages({ limit: 100 });
+        // filter out the messages to the unapproved messages - starts with ear emoji and is sent by the bot
+        messages = messages.array().filter(message => message.content.startsWith('👂') && message.author.id === client.user.id);
+        
+        for (let message of messages) {
+            const split = message.content.split('\n');
+            const uuid = split[split.length - 1].replace('🆔 ', '').trim();
+
+            const quote = unapproved[uuid];
+
+            if (!quote) {
+                await message.delete();
+                continue;
+            }
+
+            reactObservable(message, emojiName, quote.expiresAt, votesRequired, [client.user.id])
+                .subscribe(
+                    // on reaction collect
+                    res => {
+                        // do nothing
+                    },
+                    // on error
+                    async err => {
+                        await message.delete();
+                        await channel.send([
+                            `🗑️ **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`,
+                            `${ await fetchUser(quote.submitter.snowflake) }, your submission was not accepted due to lack of votes.`
+                        ].join('\n'));
+                    },
+                    // on complete/approval
+                    async () => {
+                        try {
+                            // if updating the quote failes, try 5 more times
+                            await new Observable(async observer => {
+                                await quote.update({
+                                    approvedAt: new Date()
+                                });
+                                observer.next();
+                                observer.complete();
+                            }).pipe(retry(5)).toPromise();
+                        } catch (err) {
+                            await message.delete();
+                            await channel.send([
+                                `❌ **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`,
+                                `${ await fetchUser(quote.submitter.snowflake) }, an error occured while approving your quote.`
+                            ].join('\n'));
+                            return;
+                        }
+
+                        await message.delete();
+                        await channel.send([
+                            `💾 **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`,
+                            `${ await fetchUser(quote.submitter.snowflake) }, your submission has been accepted.`
+                        ].join('\n'));
+                    }
+                );
+        }
+
+        console.log('Orphan recovery complete.');
+    }
+
+    return { submitQuote, receiveQuote, recoverOrphans }
 }

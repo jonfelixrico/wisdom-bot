@@ -96,8 +96,9 @@ async function getRandomQuote(userSnowflake) {
 
 async function getUnapproved() {
     return await Quote.findAll({
-        where: { approvedAt: null, expiresAt: { [Op.gte]: new Date() } },
-        include: ['recipient', 'source']
+        // we remove the filter for expiredAt for now
+        where: { approvedAt: null },
+        include: ['submitter', 'source']
     });
 }
 
