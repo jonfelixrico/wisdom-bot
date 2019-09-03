@@ -17,9 +17,12 @@ function quoteDataExtractor(message) {
 const quoteManager = require('./services/quote-manager.service')(client, '🤔', 7, 1, quoteDataExtractor, DISCORD_CHANNEL);
 
 client.once('ready', async () => {
+    await client.user.setActivity('!wisdom help', { type: 'PLAYING'});
     await sequelize.sync();
+    
     console.log('Bot Online! Recovering orphans.');
     quoteManager.recoverOrphans();
+    
 });
 
 client.on('message', async message => {
