@@ -114,8 +114,8 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
                 await delay(100);
             }
 
-            reply = await reply.edit(new Array(5).fill('🌫️').join(''));
-            await delay(100);
+            // reply = await reply.edit(new Array(5).fill('🌫️').join(''));
+            // await delay(100);
 
             await reply.edit(`💭 **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`);
         } catch (err) {
