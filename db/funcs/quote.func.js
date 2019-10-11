@@ -59,15 +59,15 @@ async function getRandomQuote(userSnowflake) {
     let quotes = await execute(`
         SELECT
             q.id,
-            IF(r.id IS NULL, 0, r.count) count
+            IFNULL(r.count, 0) count
         FROM quotes q
         LEFT JOIN (
             SELECT
                 COUNT(*) count,
-                id
+                quoteId
             FROM receives
-            GROUP BY id
-        ) r ON q.id = r.id
+            GROUP BY quoteId
+        ) r ON q.id = r.quoteId
         WHERE q.approvedAt IS NOT NULL
     `);
 
@@ -75,12 +75,10 @@ async function getRandomQuote(userSnowflake) {
         return null;
     }
 
-    console
-
     const weights = quotes.map(quote => quote.count),
         max = Math.max(...weights);
 
-    const selectedId = quotes[weightedRandom(weights.map(weight => Math.pow(max === 0 ? 100 : (101 - (weight / max * 100)), 2)))].id;
+    const selectedId = quotes[weightedRandom(weights.map(weight => Math.pow(max === 0 ? 100 : (101 - (weight / max * 100)), 1)))].id;
 
     let quote = null;
 

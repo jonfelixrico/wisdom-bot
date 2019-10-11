@@ -14,7 +14,7 @@ function quoteDataExtractor(message) {
     };
 }
 
-const quoteManager = require('./services/quote-manager.service')(client, '🤔', 7, 1, quoteDataExtractor, DISCORD_CHANNEL);
+const quoteManager = require('./services/quote-manager.service')(client, '🤔', 7, 3, quoteDataExtractor, DISCORD_CHANNEL);
 
 client.once('ready', async () => {
     await client.user.setActivity('!wisdom help', { type: 'PLAYING'});
