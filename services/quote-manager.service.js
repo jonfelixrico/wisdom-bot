@@ -56,7 +56,7 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
             `🆔 ${ quote.uuid }`
         ].join('\n'));
 
-        reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id])
+        reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id, message.author.id])
             .subscribe(
                 // on reaction collect
                 res => {
@@ -113,9 +113,6 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
                 reply = await reply.edit(['🌬️', ...new Array(i).fill('      '), '💨'].join(''));
                 await delay(100);
             }
-
-            // reply = await reply.edit(new Array(5).fill('🌫️').join(''));
-            // await delay(100);
 
             await reply.edit(`💭 **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`);
         } catch (err) {
