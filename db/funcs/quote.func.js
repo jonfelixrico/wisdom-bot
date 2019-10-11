@@ -80,7 +80,7 @@ async function getRandomQuote(userSnowflake) {
     const weights = quotes.map(quote => quote.count),
         max = Math.max(...weights);
 
-    const selectedId = quotes[weightedRandom(weights.map(weight => max === 0 ? 100 : (101 - (weight / max * 100))))].id;
+    const selectedId = quotes[weightedRandom(weights.map(weight => Math.pow(max === 0 ? 100 : (101 - (weight / max * 100)), 2)))].id;
 
     let quote = null;
 
