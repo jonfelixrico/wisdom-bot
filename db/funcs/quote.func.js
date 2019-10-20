@@ -100,4 +100,17 @@ async function getUnapproved() {
     });
 }
 
-module.exports = { createQuote, approveQuote, getRandomQuote, getUnapproved };
+async function getStatistics() {
+    const data = await execute(`
+        SELECT
+	        SUM(IF(approvedAt is not null, 1, 0)) approved,
+            SUM(IF(approvedAt is null and expiresAt <= CURRENT_TIMESTAMP, 1, 0)) pending,
+            SUM(IF(approvedAt is null and expiresAt > CURRENT_TIMESTAMP, 1, 0)) expired,
+            MAX(submittedAt) last_submit
+        FROM quotes;
+    `);
+
+    return data[0];
+}
+
+module.exports = { createQuote, approveQuote, getRandomQuote, getUnapproved, getStatistics };

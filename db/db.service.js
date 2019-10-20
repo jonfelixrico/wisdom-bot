@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize'),
-    mysql = require('mysql2');
+    mysql = require('mysql2'),
+    moment = require('moment');
 
 
 const { DB_USER, DB_PASS, DB_HOST, DB_SCHEMA } = process.env;
@@ -23,10 +24,28 @@ const mysqlPool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 15,
     queueLimit: 0
-}).promise();
+});
+
+const mysqlPromisePool = mysqlPool.promise();
 
 async function execute(sql, params) {
-    return (await mysqlPool.execute(sql, params))[0];
+    return (await mysqlPromisePool.execute(sql, params))[0];
 }
 
-module.exports = { sequelize, execute };
+function ping() {
+    let start = moment();
+    return new Promise((res, rej) => {
+        mysqlPool.getConnection(function(err, conn) {
+            if (err) return rej(err);
+
+            conn.ping(function (err) {
+                if (err) return rej(err);
+                mysqlPool.releaseConnection(conn);
+
+                res(moment().diff(start, 'seconds', true));
+            });
+        });
+    });
+}
+
+module.exports = { sequelize, execute, ping };

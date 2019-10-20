@@ -2,7 +2,7 @@ const { BehaviorSubject, timer, of, merge } = require('rxjs'),
     { filter, map, finalize, takeUntil, throwError, take, concatMap, tap } = require('rxjs/operators');
 
 module.exports = function(message, emojiName, expiresAt, votesRequired, blacklist) {
-    blacklist = new Set(blacklist || []);
+    // blacklist = new Set(blacklist || []);
     expiresAt = new Date(expiresAt);
 
     if (new Date() >= expiresAt) {
@@ -19,9 +19,15 @@ module.exports = function(message, emojiName, expiresAt, votesRequired, blacklis
             return 0;
         }
 
+        // {reaction}.users doesn't fetch live user data (only cached, reactions received since bootup). only the count.
+
+        /*
         // we return the number of users that reacted with the correct emoji
         // blacklisted users does not count
-        return reaction[0].users.keyArray().filter(id => !blacklist.has(id)).length;
+        return reaction[0].users.array().filter(user => !blacklist.has(user.id)).length;
+        */
+
+        return reaction[0].count;
     }
 
     const reactSubject = new BehaviorSubject(countInitReacts(message, emojiName, blacklist));
@@ -33,7 +39,10 @@ module.exports = function(message, emojiName, expiresAt, votesRequired, blacklis
     const collector = message.createReactionCollector((reaction) => reaction.emoji.name === emojiName);
 
     collector.on('collect', async reaction => {
-        reactSubject.next(reaction.users.keyArray().filter(id => !blacklist.has(id)).length);
+        // check countinitreacts we can't rely on {reaction}.users
+        // reactSubject.next(reaction.users.keyArray().filter(id => !blacklist.has(id)).length);
+
+        reactSubject.next(reaction.count);
     });
 
     const thresholdReached$ = reactSubject.asObservable().pipe(

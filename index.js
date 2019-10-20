@@ -1,10 +1,14 @@
 require('dotenv').config()
 
 const Discord = require('discord.js');
+
 const { DISCORD_TOKEN, DISCORD_PREFIX, DISCORD_CHANNEL } = process.env;
 const client = new Discord.Client();
 
 const { sequelize } = require('./db/models');
+const { ping } = require('./db/db.service');
+const { getStatistics } = require('./db/funcs/quote.func');
+const { getUptimeHours, getStartTime } = require('./services/system.service');
 
 function quoteDataExtractor(message) {
     return {
@@ -71,6 +75,15 @@ client.on('message', async message => {
                     .then(msg =>
                         msg.delete(5000));
         }
+    }
+
+    if (message.content.startsWith(`${ DISCORD_PREFIX } status`)) {
+      const dbPing = await ping();
+      const { approved, pending } = await getStatistics();
+      const uptimeHours = getUptimeHours().toFixed(2);
+      const startTime = getStartTime();
+
+      message.channel.send(`Server started at ${ startTime } (started ${ uptimeHours } hours ago)\nDatabase latency: ${ dbPing }s\nQuotes statistics: ${ approved } approved, ${ pending } pending`);
     }
 });
 
