@@ -8,6 +8,8 @@ const { User, Quote, Receive, sequelize } = require('../models'),
     CREATE & DELETE FUNCTIONS
 */
 
+let receiveCount = 0;
+
 async function createQuote(submittedBy, spokenBy, isUser, expiresAt, content, year) {
     year = year || new Date().getFullYear();
 
@@ -101,6 +103,8 @@ async function getRandomQuote(userSnowflake) {
         await Receive.create({ quoteId: quote.id, receivedBy: user.id, receivedAt: new Date() }, { transaction });
     });
 
+    receiveCount++;
+
     return quote;
 }
 
@@ -125,4 +129,8 @@ async function getStatistics() {
     return data[0];
 }
 
-module.exports = { createQuote, approveQuote, getRandomQuote, getUnapproved, getStatistics };
+function getReceiveCount() {
+    return receiveCount;
+}
+
+module.exports = { createQuote, approveQuote, getRandomQuote, getUnapproved, getStatistics, getReceiveCount };
