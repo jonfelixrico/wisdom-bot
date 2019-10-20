@@ -72,6 +72,6 @@ client.on('message', async message => {
                         msg.delete(5000));
         }
     }
-})
+});
 
 client.login(DISCORD_TOKEN);
