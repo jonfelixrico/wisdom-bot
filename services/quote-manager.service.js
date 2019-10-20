@@ -56,7 +56,7 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
             `🆔 ${ quote.uuid }`
         ].join('\n'));
 
-        reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id, message.author.id])
+        reactObservable(response, emojiName, quote.expiresAt, votesRequired, [client.user.id])
             .subscribe(
                 // on reaction collect
                 res => {
