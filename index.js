@@ -7,7 +7,7 @@ const client = new Discord.Client();
 
 const { sequelize } = require('./db/models');
 const { ping } = require('./db/db.service');
-const { getStatistics } = require('./db/funcs/quote.func');
+const { getStatistics, getReceiveCount } = require('./db/funcs/quote.func');
 const { getUptimeHours, getStartTime } = require('./services/system.service');
 
 function quoteDataExtractor(message) {
@@ -83,7 +83,7 @@ client.on('message', async message => {
       const uptimeHours = getUptimeHours().toFixed(2);
       const startTime = getStartTime();
 
-      message.channel.send(`Server started at ${ startTime } (started ${ uptimeHours } hours ago)\nDatabase latency: ${ dbPing }s\nQuotes statistics: ${ approved } approved, ${ pending } pending`);
+      message.channel.send(`Server started at ${ startTime } (started ${ uptimeHours } hours ago)\nDispensed ${ getReceiveCount() } wisdom since startup\nDatabase latency: ${ dbPing }s\nQuotes statistics: ${ approved } approved, ${ pending } pending`);
     }
 });
 
