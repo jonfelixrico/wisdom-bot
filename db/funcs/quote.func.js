@@ -56,6 +56,8 @@ async function approveQuote(quoteUuid) {
 
 // Randomly grabs a quote from the database.
 async function getRandomQuote(userSnowflake) {
+
+    /*
     let quotes = await execute(`
         SELECT
             q.id,
@@ -81,6 +83,16 @@ async function getRandomQuote(userSnowflake) {
     const selectedId = quotes[weightedRandom(weights.map(weight => Math.pow(max === 0 ? 100 : (101 - (weight / max * 100)), 1)))].id;
 
     let quote = null;
+    */
+
+    let res = await execute(`
+        SELECT id
+        FROM quotes
+        ORDER BY RAND()
+        LIMIT 1;
+    `);
+
+    const selectedId = res[0].id;
 
     await sequelize.transaction(async transaction => {
         quote = await Quote.findByPk(selectedId, { transaction });
