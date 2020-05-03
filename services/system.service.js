@@ -1,13 +1,10 @@
-const moment = require('moment');
+const moment = require('moment-timezone');
+moment.tz.setDefault('Asia/Manila');
 
 const startTime = moment();
 
-function getStartTime() {
-    return startTime.format("dddd, MMMM Do YYYY, h:mm:ss a");
-}
+const getStartTime = () => startTime.format("dddd, MMMM Do YYYY, h:mm:ss a");
 
-function getUptimeHours() {
-    return moment().diff(startTime, 'hours', true);
-}
+const getUptimeHours = () => moment().diff(startTime, 'hours', true);
 
 module.exports = { getStartTime, getUptimeHours };
