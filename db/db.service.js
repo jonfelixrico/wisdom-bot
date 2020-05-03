@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize'),
     mysql = require('mysql2'),
-    moment = require('moment');
+    moment = require('moment-timezone');
 
 
 const { DB_USER, DB_PASS, DB_HOST, DB_SCHEMA } = process.env;

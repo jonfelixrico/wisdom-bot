@@ -2,7 +2,7 @@ const reactObservable = require('../utils/reaction-observer.util'),
     { createQuote, getRandomQuote, getUnapproved } = require('../db/funcs/quote.func'),
     { Observable } = require('rxjs'),
     { retry } = require('rxjs/operators'),
-    moment = require('moment');
+    moment = require('moment-timezone');
 
 function delay(duration) {
     return new Promise(resolve => {
@@ -109,12 +109,12 @@ module.exports = function(client, emojiName, duration, votesRequired, quoteDataF
                 return;
             }
 
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 3; i++) {
                 reply = await reply.edit(['🌬️', ...new Array(i).fill('      '), '💨'].join(''));
                 await delay(100);
             }
 
-            await reply.edit(`💭 **"${ quote.content }"** - ${ await authorString(quote) }, ${ quote.year }`);
+            await reply.edit(`💭 **"${ quote.content }"** - ${ await authorString(quote) }, ${ moment(quote.submittedAt).get('year') }`);
         } catch (err) {
             console.log(err);
             await reply.edit('😵 A server side error occured!');
