@@ -179,6 +179,12 @@
         }
       }
     },
+    "prettier": {
+      "version": "2.0.5",
+      "resolved": "https://registry.npmjs.org/prettier/-/prettier-2.0.5.tgz",
+      "integrity": "sha512-7PtVymN48hGcO4fGjybyBSIWDsLU4H4XlvOHfq91pz9kkGlonzwTfYkaIEwiRg/dAJF9YlbsduBAgtYLi+8cFg==",
+      "dev": true
+    },
     "prism-media": {
       "version": "0.0.4",
       "resolved": "https://registry.npmjs.org/prism-media/-/prism-media-0.0.4.tgz",
