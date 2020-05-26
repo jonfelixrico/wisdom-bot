@@ -1,8 +1,8 @@
 const { User, Quote, Receive, sequelize } = require('../models'),
     { execute } = require('../db.service'),
-    { Op } = require('sequelize'),
-    weightedRandom = require('weighted-random'),
-    uuid = require('short-uuid').generate;
+    { Op, Sequelize } = require('sequelize'),
+    uuid = require('short-uuid').generate,
+    _ = require('lodash');
 
 /*
     CREATE & DELETE FUNCTIONS
@@ -87,14 +87,18 @@ async function getRandomQuote(userSnowflake) {
     let quote = null;
     */
 
-    let res = await execute(`
-        SELECT id
-        FROM quotes
-        ORDER BY RAND()
-        LIMIT 1;
-    `);
+   let quotes = await Quote.findAll({
+       where: {
+           approvedAt: {
+               [Op.ne]: null
+           }
+       },
+       order: Sequelize.fn('rand')
+   });
 
-    const selectedId = res[0].id;
+   quotes = _.shuffle(quotes);
+
+    const selectedId = quotes[0].id;
 
     await sequelize.transaction(async transaction => {
         quote = await Quote.findByPk(selectedId, { transaction });

@@ -19,6 +19,7 @@
   "dependencies": {
     "discord.js": "^11.6.4",
     "dotenv": "^8.2.0",
+    "lodash": "^4.17.15",
     "moment-timezone": "^0.5.28",
     "mysql2": "^1.7.0",
     "rxjs": "^6.5.5",
