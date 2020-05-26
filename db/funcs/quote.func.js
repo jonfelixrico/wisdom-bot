@@ -2,7 +2,8 @@ const { User, Quote, Receive, sequelize } = require('../models'),
   { execute } = require('../db.service'),
   { Op, Sequelize } = require('sequelize'),
   uuid = require('short-uuid').generate,
-  _ = require('lodash')
+  _ = require('lodash'),
+  weightedRandom = require('weighted-random')
 
 /*
     CREATE & DELETE FUNCTIONS
@@ -74,49 +75,51 @@ async function approveQuote(quoteUuid) {
     QUOTE-FETCHING FUNCTIONS
 */
 
+// use weightedRandom to pick the quote
+function randomizeWeighted(quotes) {
+  const receiveLengths = quotes.map((q) => q.receives.length)
+  const max = _.max(receiveLengths)
+  const BIAS = 1
+
+  // the lesser the number of receives a quote has, the higher chance it has to be picked
+  const randomizedIdx = weightedRandom(
+    receiveLengths.map((rl) => max - rl + BIAS)
+  )
+
+  return quotes[randomizedIdx].id
+}
+
+// use lodash shuffle to pick the quote
+function randomizePure(quotes) {
+  return _.chain(quotes).shuffle().head().value().id
+}
+
+// get the head of the quotes array, and that will be the quote
+function randomizeDb(quotes) {
+  return _.head(quotes).id
+}
+
+const RANDOMIZERS = [randomizeDb, randomizePure, randomizeWeighted]
+
 // Randomly grabs a quote from the database.
 async function getRandomQuote(userSnowflake) {
-  /*
-    let quotes = await execute(`
-        SELECT
-            q.id,
-            IFNULL(r.count, 0) count
-        FROM quotes q
-        LEFT JOIN (
-            SELECT
-                COUNT(*) count,
-                quoteId
-            FROM receives
-            GROUP BY quoteId
-        ) r ON q.id = r.quoteId
-        WHERE q.approvedAt IS NOT NULL
-    `);
-
-    if (!quotes.length) {
-        return null;
-    }
-
-    const weights = quotes.map(quote => quote.count),
-        max = Math.max(...weights);
-
-    const selectedId = quotes[weightedRandom(weights.map(weight => Math.pow(max === 0 ? 100 : (101 - (weight / max * 100)), 1)))].id;
-
-    let quote = null;
-    */
-
   let quotes = await Quote.findAll({
     where: {
       approvedAt: {
         [Op.ne]: null,
       },
     },
+    include: [{ model: Receive, as: 'receives' }],
     order: Sequelize.fn('rand'),
     limit: 20,
   })
 
-  quotes = _.shuffle(quotes)
+  const randomizerIdx = _.random(0, RANDOMIZERS.length - 1, false)
+  console.debug(`Randomizer index is ${randomizerIdx}`)
+  const randomizer = RANDOMIZERS[randomizerIdx]
 
-  const selectedId = quotes[0].id
+  const selectedId = randomizer(quotes)
+  console.debug(`Quote to be received has id ${selectedId}`)
 
   await sequelize.transaction(async (transaction) => {
     quote = await Quote.findByPk(selectedId, { transaction })
